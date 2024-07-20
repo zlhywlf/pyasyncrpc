@@ -1,0 +1,21 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format --force-exclude
+        language: python
+        language_version: python3.7
+        additional_dependencies: [ "ruff~=0.5.0" ]
+        types_or: [ python , pyi ]
+        require_serial: true
+        verbose: true
+      - id: ruff-check
+        name: ruff check
+        entry: ruff check --force-exclude
+        language: python
+        language_version: python3.7
+        additional_dependencies: [ "ruff~=0.5.0" ]
+        types_or: [ python , pyi ]
+        require_serial: true
+        verbose: true
