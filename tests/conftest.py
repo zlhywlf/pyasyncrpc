@@ -44,12 +44,12 @@ def anyio_backend() -> str:
 
 
 @pytest.fixture(scope="module")
-async def grpc_addr() -> str:
+async def grpc_addr() -> AsyncGenerator[str, Any]:
     """Grpc addr."""
     ip = "localhost"
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((ip, 0))
-    return f"{ip}:{sock.getsockname()[1]}"
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind((ip, 0))
+        yield f"{ip}:{sock.getsockname()[1]}"
 
 
 @pytest.fixture(scope="module")
