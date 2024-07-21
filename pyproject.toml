@@ -17,6 +17,8 @@ classifiers = [
   "Programming Language :: Python :: 3.7",
 ]
 dependencies = [
+  "grpcio~=1.62.0",
+  "pydantic~=2.5.0",
 ]
 
 [project.urls]
@@ -56,7 +58,7 @@ select = [
   "A", "ANN", "ARG", "ASYNC", "B", "BLE", "C4", "COM", "CPY", "D", "DTZ", "E", "EM", "ERA", "F", "FBT", "I", "ICN",
   "ISC", "N", "PIE", "PT", "PTH", "PYI", "Q", "RET", "RSE", "RUF", "S", "SIM", "SLOT", "T20", "TD", "UP", "W",
 ]
-ignore = ["COM812", "D203", "D213", "ISC001"]
+ignore = ["COM812", "D203", "D213", "ISC001", "RUF029"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "test_*.py" = ["S101"]
@@ -74,6 +76,7 @@ convention = "google"
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "tests"]
+asyncio_mode = 'auto'
 
 [tool.pytest_env]
 DEBUG = true
@@ -82,7 +85,8 @@ DEBUG = true
 strict = true
 python_version = "3.7"
 files = ["src/pyasyncrpc", "tests"]
+exclude = ["tests.rpc"]
 
 [[tool.mypy.overrides]]
-module = []
+module = ["grpc"]
 ignore_missing_imports = true

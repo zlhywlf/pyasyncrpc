@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+service Service {
+  rpc doSomething01 (ServiceRequest) returns (ServiceReply) {}
+  rpc doSomething02 (ServiceRequest) returns (ServiceReply) {}
+}
+
+message ServiceRequest {
+  string name = 1;
+}
+
+message ServiceReply {
+  string message = 1;
+  int32 status = 2;
+}

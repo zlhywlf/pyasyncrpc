@@ -10,3 +10,6 @@ __pycache__
 .ruff_cache
 htmlcov
 src/pyasyncrpc/_version.py
+tests/rpc/*
+!tests/rpc/__init__.py
+!tests/rpc/simple.proto

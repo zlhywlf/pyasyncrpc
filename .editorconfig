@@ -9,7 +9,7 @@ end_of_line = lf
 charset = utf-8
 max_line_length = 120
 
-[*.{yml,yaml,json,js,css,html,toml}]
+[*.{yml,yaml,json,js,css,html,toml,proto,sh}]
 indent_size = 2
 
 [*.md]
