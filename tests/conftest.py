@@ -37,7 +37,13 @@ async def do_service02(arg: Arg) -> Data:
     return Data(message=f"do_service02: Hello, {arg.name}!", status=200)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module", autouse=True)
+def anyio_backend() -> str:
+    """Anyio backend."""
+    return "asyncio"
+
+
+@pytest.fixture(scope="module")
 async def grpc_addr() -> str:
     """Grpc addr."""
     ip = "localhost"
@@ -46,7 +52,7 @@ async def grpc_addr() -> str:
     return f"{ip}:{sock.getsockname()[1]}"
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 async def grpc_server(grpc_addr: str) -> AsyncGenerator[GRPCService, Any]:
     """Grpc server."""
     info = GRPCInfo(
@@ -66,20 +72,20 @@ async def grpc_server(grpc_addr: str) -> AsyncGenerator[GRPCService, Any]:
         yield server
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 async def grpc_channel(grpc_addr: str) -> AsyncGenerator[_channel.Channel, Any]:
     """Grpc channel."""
     async with grpc.aio.insecure_channel(grpc_addr) as channel:
         yield channel
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 async def grpc_stub(grpc_server: GRPCService, grpc_channel: _channel.Channel) -> Any:  # noqa: ANN401
     """Grpc stub."""
     return grpc_server.config.server_stub(grpc_channel)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 async def grpc_request(grpc_server: GRPCService) -> type:
     """Grpc request."""
     return grpc_server.config.request_func

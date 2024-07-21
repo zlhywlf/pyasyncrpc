@@ -9,13 +9,13 @@ from typing import Any
 import pytest
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_base(grpc_stub: Any, grpc_request: Any) -> Any:  # noqa: ANN401
     """Run service."""
     return await grpc_stub.doSomething01(grpc_request(name="foo"))
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_concurrent_requests(grpc_stub: Any, grpc_request: Any) -> None:  # noqa: ANN401
     """Concurrency test."""
     num = 100
