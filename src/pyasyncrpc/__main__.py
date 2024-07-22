@@ -9,6 +9,7 @@ import anyio
 import click
 
 from pyasyncrpc._version import version
+from pyasyncrpc.log.LoguruLog import LoguruLog
 from pyasyncrpc.model.GRPCConfig import GRPCInfo, GRPCMethodInfo
 from pyasyncrpc.service.GRPCService import GRPCService
 
@@ -31,7 +32,7 @@ def main(**kwargs: Any) -> None:
         return
     info = GRPCInfo.model_validate(kwargs)
     methods_info = [GRPCMethodInfo.model_validate_json(_) for _ in kwargs.get("method", [])]
-    anyio.run(GRPCService.serve, info, methods_info)
+    anyio.run(GRPCService.serve, info, methods_info, LoguruLog())
 
 
 if __name__ == "__main__":

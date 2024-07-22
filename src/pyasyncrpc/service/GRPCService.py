@@ -13,13 +13,16 @@ import grpc
 from pydantic import BaseModel
 from typing_extensions import Self
 
+from pyasyncrpc.log.Log import Log
 from pyasyncrpc.model.GRPCConfig import GRPCConfig, GRPCInfo, GRPCMethod, GRPCMethodInfo
 
 
 class GRPCService:
     """grpc service."""
 
-    def __init__(self, info: GRPCInfo, methods_info: Optional[List[GRPCMethodInfo]] = None) -> None:
+    def __init__(
+        self, info: GRPCInfo, methods_info: Optional[List[GRPCMethodInfo]] = None, log: Optional[Log] = None
+    ) -> None:
         """Init."""
         pd2_pkg = importlib.import_module(info.pd2_pkg)
         pd2_grpc_pkg = importlib.import_module(info.pd2_grpc_pkg)
@@ -40,6 +43,8 @@ class GRPCService:
             method_func = getattr(method_pkg, method_info.method_name)
             arg_class = getattr(method_pkg, method_info.arg_class_name)
             self.register_method(method_info.grpc_method_name, arg_class)(method_func)
+        if log:
+            log.init_log()
         self._server = grpc.aio.server()
 
     @property
@@ -100,8 +105,10 @@ class GRPCService:
         await self.shutdown()
 
     @classmethod
-    async def serve(cls, info: GRPCInfo, methods_info: Optional[List[GRPCMethodInfo]] = None) -> None:
+    async def serve(
+        cls, info: GRPCInfo, methods_info: Optional[List[GRPCMethodInfo]] = None, log: Optional[Log] = None
+    ) -> None:
         """Service entrance."""
-        obj = cls(info, methods_info)
+        obj = cls(info, methods_info, log)
         await obj.launch()
         await obj.server.wait_for_termination()
