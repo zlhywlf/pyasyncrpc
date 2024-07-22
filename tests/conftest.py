@@ -8,7 +8,9 @@ from typing import Any, AsyncGenerator
 
 import grpc
 import pytest
+from faker import Faker
 from grpc import _channel
+from pyasyncrpc.log.LoguruLog import LoguruLog
 from pyasyncrpc.model.GRPCConfig import GRPCInfo, GRPCMethodInfo
 from pyasyncrpc.service.GRPCService import GRPCService
 
@@ -17,6 +19,12 @@ from pyasyncrpc.service.GRPCService import GRPCService
 def anyio_backend() -> str:
     """Anyio backend."""
     return "asyncio"
+
+
+@pytest.fixture(scope="module")
+async def faker() -> Faker:
+    """Faker."""
+    return Faker("zh_CN")
 
 
 @pytest.fixture(scope="module")
@@ -55,7 +63,7 @@ async def grpc_server(grpc_addr: str) -> AsyncGenerator[GRPCService, Any]:
             arg_class_name="Arg",
         ),
     ]
-    async with GRPCService(info, methods_info) as server:
+    async with GRPCService(info, methods_info, LoguruLog()) as server:
         await server.launch()
         yield server
 

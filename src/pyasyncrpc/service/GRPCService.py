@@ -15,6 +15,7 @@ from typing_extensions import Self
 
 from pyasyncrpc.log.Log import Log
 from pyasyncrpc.model.GRPCConfig import GRPCConfig, GRPCInfo, GRPCMethod, GRPCMethodInfo
+from pyasyncrpc.util.Snowflake import Snowflake
 
 
 class GRPCService:
@@ -46,6 +47,7 @@ class GRPCService:
         if log:
             log.init_log()
         self._server = grpc.aio.server()
+        self._snowflake = Snowflake(1, 1)
 
     @property
     def config(self) -> GRPCConfig:
@@ -60,7 +62,7 @@ class GRPCService:
     def register_method(self, method_name: str, args_type: Type[BaseModel]) -> Callable[[Any], Any]:
         """Register rpc method."""
 
-        def wrapper(func: Callable[[BaseModel], Awaitable[BaseModel]]) -> Callable[[Any], Any]:
+        def wrapper(func: Callable[[BaseModel, int], Awaitable[BaseModel]]) -> Callable[[Any], Any]:
             if not inspect.iscoroutinefunction(func):
                 msg = "a coroutine function was expected"
                 raise RuntimeError(msg)
@@ -69,7 +71,9 @@ class GRPCService:
                 """Process Parameters."""
                 request = args[1]
                 params = args_type.model_validate({k: getattr(request, k) for k in args[1].DESCRIPTOR.fields_by_name})
-                ret = await func(params)
+                request_id = self._snowflake.next_id()
+                logging.info(f"{request_id}:[%s]", params)
+                ret = await func(params, request_id)
                 return self.config.reply_func(**ret.model_dump(by_alias=True))
 
             self.config.methods.append(GRPCMethod(grpc_method_name=method_name, method=wrap))
