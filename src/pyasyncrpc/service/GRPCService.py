@@ -7,19 +7,19 @@ import importlib
 import inspect
 import logging
 from types import TracebackType
-from typing import Any, Awaitable, Callable, Optional, Type
+from typing import Any, Awaitable, Callable, List, Optional, Type
 
 import grpc
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from pyasyncrpc.model.GRPCConfig import GRPCConfig, GRPCInfo, GRPCMethod
+from pyasyncrpc.model.GRPCConfig import GRPCConfig, GRPCInfo, GRPCMethod, GRPCMethodInfo
 
 
 class GRPCService:
     """grpc service."""
 
-    def __init__(self, info: GRPCInfo) -> None:
+    def __init__(self, info: GRPCInfo, methods_info: Optional[List[GRPCMethodInfo]] = None) -> None:
         """Init."""
         pd2_pkg = importlib.import_module(info.pd2_pkg)
         pd2_grpc_pkg = importlib.import_module(info.pd2_grpc_pkg)
@@ -35,12 +35,22 @@ class GRPCService:
             request_func=request_func,
             reply_func=reply_func,
         )
+        for method_info in methods_info or []:
+            method_pkg = importlib.import_module(method_info.pkg)
+            method_func = getattr(method_pkg, method_info.method_name)
+            arg_class = getattr(method_pkg, method_info.arg_class_name)
+            self.register_method(method_info.grpc_method_name, arg_class)(method_func)
         self._server = grpc.aio.server()
 
     @property
     def config(self) -> GRPCConfig:
         """Service config."""
         return self._config
+
+    @property
+    def server(self) -> grpc.Server:
+        """Service config."""
+        return self._server
 
     def register_method(self, method_name: str, args_type: Type[BaseModel]) -> Callable[[Any], Any]:
         """Register rpc method."""
@@ -57,14 +67,14 @@ class GRPCService:
                 ret = await func(params)
                 return self.config.reply_func(**ret.model_dump(by_alias=True))
 
-            self.config.methods.append(GRPCMethod(method_name=method_name, method=wrap))
+            self.config.methods.append(GRPCMethod(grpc_method_name=method_name, method=wrap))
             return wrap
 
         return wrapper
 
     def create_servicer(self) -> object:
         """Create the servicer."""
-        methods = {meta.method_name: meta.method for meta in self.config.methods}
+        methods = {meta.grpc_method_name: meta.method for meta in self.config.methods}
         return type(self.config.info.service_name, (), methods)()
 
     async def launch(self) -> None:
@@ -88,3 +98,10 @@ class GRPCService:
     ) -> None:
         """Exit."""
         await self.shutdown()
+
+    @classmethod
+    async def serve(cls, info: GRPCInfo, methods_info: Optional[List[GRPCMethodInfo]] = None) -> None:
+        """Service entrance."""
+        obj = cls(info, methods_info)
+        await obj.launch()
+        await obj.server.wait_for_termination()

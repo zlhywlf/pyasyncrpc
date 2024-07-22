@@ -9,32 +9,8 @@ from typing import Any, AsyncGenerator
 import grpc
 import pytest
 from grpc import _channel
-from pyasyncrpc.model.GRPCConfig import GRPCInfo
+from pyasyncrpc.model.GRPCConfig import GRPCInfo, GRPCMethodInfo
 from pyasyncrpc.service.GRPCService import GRPCService
-from pydantic import BaseModel
-
-
-class Arg(BaseModel):
-    """request arg."""
-
-    name: str
-
-
-class Data(BaseModel):
-    """reply data."""
-
-    message: str
-    status: int
-
-
-async def do_service01(arg: Arg) -> Data:
-    """do_service01."""
-    return Data(message=f"do_service01: Hello, {arg.name}!", status=200)
-
-
-async def do_service02(arg: Arg) -> Data:
-    """do_service02."""
-    return Data(message=f"do_service02: Hello, {arg.name}!", status=200)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -65,9 +41,21 @@ async def grpc_server(grpc_addr: str) -> AsyncGenerator[GRPCService, Any]:
         pd2_grpc_pkg="rpc.simple_pb2_grpc",
         listen_addr=grpc_addr,
     )
-    async with GRPCService(info) as server:
-        server.register_method("doSomething01", Arg)(do_service01)
-        server.register_method("doSomething02", Arg)(do_service02)
+    methods_info = [
+        GRPCMethodInfo(
+            grpc_method_name="doSomething01",
+            pkg="rpc",
+            method_name="do_service01",
+            arg_class_name="Arg",
+        ),
+        GRPCMethodInfo(
+            grpc_method_name="doSomething02",
+            pkg="rpc",
+            method_name="do_service02",
+            arg_class_name="Arg",
+        ),
+    ]
+    async with GRPCService(info, methods_info) as server:
         await server.launch()
         yield server
 

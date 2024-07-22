@@ -23,7 +23,7 @@ class GRPCConfig(BaseModel):
 class GRPCMethod(BaseModel):
     """method in service."""
 
-    method_name: str
+    grpc_method_name: str
     method: Callable[[Any], Any]
 
 
@@ -38,3 +38,12 @@ class GRPCInfo(BaseModel):
     pd2_pkg: str
     pd2_grpc_pkg: str
     listen_addr: str
+
+
+class GRPCMethodInfo(BaseModel):
+    """method information in service."""
+
+    grpc_method_name: str
+    pkg: str
+    method_name: str
+    arg_class_name: str
