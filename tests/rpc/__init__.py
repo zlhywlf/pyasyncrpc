@@ -1,7 +1,9 @@
 import logging
 
 import anyio
+from pyasyncrpc.model.PyScriptConfig import PyScriptConfig
 from pyasyncrpc.model.RequestContext import RequestContext
+from pyasyncrpc.util.PyScriptActuator import PyScriptActuator
 from pydantic import BaseModel
 
 
@@ -26,7 +28,10 @@ async def say_hello(ctx: RequestContext) -> Data:
     return Data(message=msg, status=200)
 
 
-async def do_service02(ctx: RequestContext) -> Data:
-    """do_service02."""
+async def execute_py_script(ctx: RequestContext) -> Data:
+    """Execute python script."""
     logging.info(ctx.request_id)
-    return Data(message=f"do_service02: Hello, {ctx.request_param.name}!", status=200)
+    config = PyScriptConfig.model_validate_json(ctx.request_param.name)
+    actuator = PyScriptActuator(config)
+    ret = await actuator()
+    return Data(message=f"Execute python script:{ret}", status=200)

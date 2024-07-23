@@ -25,3 +25,11 @@ async def test_concurrent_requests(grpc_stub: Any, grpc_request: Any, faker: Fak
     ])
     for response in responses:
         assert response.status == 200
+
+
+@pytest.mark.anyio
+async def test_execute_py_script(grpc_stub: Any, grpc_request: Any) -> Any:  # noqa: ANN401
+    """Execute python script."""
+    return await grpc_stub.executePyScript(
+        grpc_request(name='{"pkg":"script.base_case","class_name":"Simple","method_name":"run"}')
+    )

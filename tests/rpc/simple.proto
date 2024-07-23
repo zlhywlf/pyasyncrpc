@@ -2,7 +2,7 @@ syntax = "proto3";
 
 service Service {
   rpc sayHello (ServiceRequest) returns (ServiceReply) {}
-  rpc doSomething02 (ServiceRequest) returns (ServiceReply) {}
+  rpc executePyScript (ServiceRequest) returns (ServiceReply) {}
 }
 
 message ServiceRequest {
