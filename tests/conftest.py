@@ -51,9 +51,9 @@ async def grpc_server(grpc_addr: str) -> AsyncGenerator[GRPCService, Any]:
     )
     methods_info = [
         GRPCMethodInfo(
-            grpc_method_name="doSomething01",
+            grpc_method_name="sayHello",
             pkg="rpc",
-            method_name="do_service01",
+            method_name="say_hello",
             arg_class_name="Arg",
         ),
         GRPCMethodInfo(

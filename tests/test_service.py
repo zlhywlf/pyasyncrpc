@@ -13,7 +13,7 @@ from faker import Faker
 @pytest.mark.anyio
 async def test_base(grpc_stub: Any, grpc_request: Any, faker: Faker) -> Any:  # noqa: ANN401
     """Run service."""
-    return await grpc_stub.doSomething01(grpc_request(name=faker.name()))
+    return await grpc_stub.sayHello(grpc_request(name=faker.name()))
 
 
 @pytest.mark.anyio

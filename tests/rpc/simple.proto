@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 service Service {
-  rpc doSomething01 (ServiceRequest) returns (ServiceReply) {}
+  rpc sayHello (ServiceRequest) returns (ServiceReply) {}
   rpc doSomething02 (ServiceRequest) returns (ServiceReply) {}
 }
 

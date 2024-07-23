@@ -18,10 +18,10 @@ class Data(BaseModel):
     status: int
 
 
-async def do_service01(ctx: RequestContext) -> Data:
-    """do_service01."""
-    await anyio.sleep(0.5 if ctx.request_id % 2 else 0.8)
-    msg = f"{ctx.request_id}[do_service01: Hello, {ctx.request_param.name}!]"
+async def say_hello(ctx: RequestContext) -> Data:
+    """Say hello."""
+    await anyio.sleep(0.01 if ctx.request_id % 2 else 0.5)
+    msg = f"{ctx.request_id}[say: Hello, {ctx.request_param.name}!]"
     logging.info(msg)
     return Data(message=msg, status=200)
 
