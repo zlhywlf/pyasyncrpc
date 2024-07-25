@@ -103,6 +103,11 @@ class GRPCService(Service):
         if self._server:
             await self._server.stop(200)
 
+    @override
+    async def wait(self) -> None:
+        if self._server:
+            await self._server.wait_for_termination()
+
     async def __aenter__(self) -> Self:
         """Enter."""
         return self

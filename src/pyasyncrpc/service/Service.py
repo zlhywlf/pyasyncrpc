@@ -16,3 +16,7 @@ class Service(ABC):
     @abstractmethod
     async def close(self) -> None:
         """Close the service."""
+
+    @abstractmethod
+    async def wait(self) -> None:
+        """Wait for termination."""

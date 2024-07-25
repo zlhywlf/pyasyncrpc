@@ -21,15 +21,12 @@ class WindowsLauncher(Launcher, Service):
 
     def __init__(self) -> None:
         """Init."""
-        self._service: Optional[Service] = None
+        super().__init__()
         self._event_loop: Optional[TaskGroup] = None
         self._cancel_scope: Optional[CancelScope] = None
 
     @override
     def launch(self) -> None:
-        if not self._service:
-            msg = "Service instance must be added"
-            raise RuntimeError(msg)
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         handler_func = ctypes.WINFUNCTYPE(ctypes.c_void_p)(self.run_callback)
         if not kernel32.SetConsoleCtrlHandler(handler_func, True):  # noqa: FBT003
@@ -44,26 +41,20 @@ class WindowsLauncher(Launcher, Service):
             logging.info("The asynchronous rpc application has been shut down")
 
     @override
-    def add_service(self, service: Service) -> None:
-        self._service = service
-
-    @override
     async def start(self) -> None:
-        if self._service:
-            await self._service.start()
-            async with anyio.create_task_group() as tg:
-                tg.start_soon(self.wait)
-                self._event_loop = tg
-                self._cancel_scope = tg.cancel_scope
-            await self.close()
+        await self.service.start()
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(self.wait)
+            self._event_loop = tg
+            self._cancel_scope = tg.cancel_scope
+        await self.close()
 
     @override
     async def close(self) -> None:
-        if self._service:
-            await self._service.close()
+        await self.service.close()
 
+    @override
     async def wait(self) -> None:
-        """Wait for termination."""
         while True:  # noqa: ASYNC110 RUF100
             await anyio.sleep(3)
 
