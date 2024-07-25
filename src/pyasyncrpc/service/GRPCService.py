@@ -11,15 +11,16 @@ from typing import Any, Awaitable, Callable, List, Optional, Type
 
 import grpc
 from pydantic import BaseModel
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from pyasyncrpc.log.Log import Log
 from pyasyncrpc.model.GRPCConfig import GRPCConfig, GRPCInfo, GRPCMethod, GRPCMethodInfo
 from pyasyncrpc.model.RequestContext import RequestContext
+from pyasyncrpc.service.Service import Service
 from pyasyncrpc.util.Snowflake import Snowflake
 
 
-class GRPCService:
+class GRPCService(Service):
     """grpc service."""
 
     def __init__(
@@ -47,7 +48,7 @@ class GRPCService:
             self.register_method(method_info.grpc_method_name, arg_class)(method_func)
         if log:
             log.init_log()
-        self._server = grpc.aio.server()
+        self._server: Optional[grpc.Server] = None
         self._snowflake = Snowflake(1, 1)
 
     @property
@@ -56,7 +57,7 @@ class GRPCService:
         return self._config
 
     @property
-    def server(self) -> grpc.Server:
+    def server(self) -> Optional[grpc.Server]:
         """Service config."""
         return self._server
 
@@ -87,17 +88,20 @@ class GRPCService:
         methods = {meta.grpc_method_name: meta.method for meta in self.config.methods}
         return type(self.config.info.service_name, (), methods)()
 
-    async def launch(self) -> None:
-        """Launch service."""
+    @override
+    async def start(self) -> None:
+        self._server = grpc.aio.server()
         self.config.handle_func(self.create_servicer(), self._server)
         listen_addr = self.config.info.listen_addr
         self._server.add_insecure_port(listen_addr)
         logging.info("Starting server on %s", listen_addr)
         await self._server.start()
 
-    async def shutdown(self) -> None:
-        """Close the service."""
-        await self._server.stop(None)
+    @override
+    async def close(self) -> None:
+        logging.info("The asynchronous rpc application will be shut down")
+        if self._server:
+            await self._server.stop(200)
 
     async def __aenter__(self) -> Self:
         """Enter."""
@@ -107,13 +111,4 @@ class GRPCService:
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None:
         """Exit."""
-        await self.shutdown()
-
-    @classmethod
-    async def serve(
-        cls, info: GRPCInfo, methods_info: Optional[List[GRPCMethodInfo]] = None, log: Optional[Log] = None
-    ) -> None:
-        """Service entrance."""
-        obj = cls(info, methods_info, log)
-        await obj.launch()
-        await obj.server.wait_for_termination()
+        await self.close()

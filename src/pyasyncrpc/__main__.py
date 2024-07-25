@@ -5,10 +5,10 @@ Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 
 from typing import Any
 
-import anyio
 import click
 
 from pyasyncrpc._version import version
+from pyasyncrpc.launcher.LauncherFactory import LauncherFactory
 from pyasyncrpc.log.LoguruLog import LoguruLog
 from pyasyncrpc.model.GRPCConfig import GRPCInfo, GRPCMethodInfo
 from pyasyncrpc.service.GRPCService import GRPCService
@@ -32,7 +32,9 @@ def main(**kwargs: Any) -> None:
         return
     info = GRPCInfo.model_validate(kwargs)
     methods_info = [GRPCMethodInfo.model_validate_json(_) for _ in kwargs.get("method", [])]
-    anyio.run(GRPCService.serve, info, methods_info, LoguruLog())
+    service = GRPCService(info, methods_info, LoguruLog())
+    launcher = LauncherFactory.create_launcher(service)
+    launcher.launch()
 
 
 if __name__ == "__main__":

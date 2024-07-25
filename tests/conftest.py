@@ -64,7 +64,7 @@ async def grpc_server(grpc_addr: str) -> AsyncGenerator[GRPCService, Any]:
         ),
     ]
     async with GRPCService(info, methods_info, LoguruLog()) as server:
-        await server.launch()
+        await server.start()
         yield server
 
 
