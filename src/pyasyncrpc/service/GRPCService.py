@@ -6,6 +6,7 @@ Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 import importlib
 import inspect
 import logging
+from abc import ABC, abstractmethod
 from types import TracebackType
 from typing import Any, Awaitable, Callable, List, Optional, Type
 
@@ -21,11 +22,27 @@ from pyasyncrpc.service.Service import Service
 from pyasyncrpc.util.Snowflake import Snowflake
 
 
+class GRPCServiceMiddleware(ABC):
+    """grpc service middleware interface."""
+
+    @abstractmethod
+    async def pre(self, ctx: RequestContext) -> None:
+        """Execute before service."""
+
+    @abstractmethod
+    async def post(self, ctx: RequestContext, ret: BaseModel) -> None:
+        """Execute after service."""
+
+
 class GRPCService(Service):
     """grpc service."""
 
     def __init__(
-        self, info: GRPCInfo, methods_info: Optional[List[GRPCMethodInfo]] = None, log: Optional[Log] = None
+        self,
+        info: GRPCInfo,
+        methods_info: Optional[List[GRPCMethodInfo]] = None,
+        log: Optional[Log] = None,
+        middlewares: Optional[List[GRPCServiceMiddleware]] = None,
     ) -> None:
         """Init."""
         pd2_pkg = importlib.import_module(info.pd2_pkg)
@@ -55,6 +72,7 @@ class GRPCService(Service):
         self._thread_limiter = info.thread_limiter
         self._options = info.options
         self._cpu = info.cpu
+        self._middlewares = middlewares or []
 
     @property
     def config(self) -> GRPCConfig:
@@ -83,7 +101,11 @@ class GRPCService(Service):
                 params = args_type.model_validate({k: getattr(request, k) for k in args[1].DESCRIPTOR.fields_by_name})
                 ctx = RequestContext(request_id=self._snowflake.next_id(), request_param=params)
                 logging.info(f"{ctx.request_id}:[%s]", params)
+                for middleware in self._middlewares:
+                    await middleware.pre(ctx)
                 ret = await func(ctx)
+                for middleware in self._middlewares:
+                    await middleware.post(ctx, ret)
                 return self.config.reply_func(**ret.model_dump(by_alias=True))
 
             self.config.methods.append(GRPCMethod(grpc_method_name=method_name, method=wrap))
