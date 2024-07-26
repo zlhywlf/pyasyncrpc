@@ -4,11 +4,12 @@ Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 """
 
 import importlib
-from typing import Any, Callable, Dict, List
+from types import ModuleType
+from typing import Any, Callable, Dict, List, Union
 
 from anyio import Event, from_thread, to_thread
 
-from pyasyncrpc.model.PyScriptConfig import PyScriptConfig, PyScriptResult
+from pyasyncrpc.model.PyScriptConfig import PyScriptConfig, PyScriptObject, PyScriptResult
 
 
 class PyScriptActuator:
@@ -57,36 +58,36 @@ class PyScriptActuator:
             position_args.update(_)
         return position_args
 
-    def _load_class(self) -> object:
-        """Load the specified class."""
-        m = importlib.import_module(self._config.pkg)
-        if not self._config.class_name:
-            return m
-        cls = getattr(m, self._config.class_name)
-        if not self._config.class_args:
-            return cls()
-        if self._config.class_args_is_position:
-            return cls(*self._config.class_args)
-        return cls(**self._get_keyword_args(self._config.class_args))
+    def _get_obj_result(self, parent: Union[object, ModuleType], info: PyScriptObject) -> object:
+        obj = getattr(parent, info.name)
+        if not info.args:
+            return obj()
+        if info.args_is_position:
+            return obj(*info.args)
+        return obj(**self._get_keyword_args(info.args))
 
     @handle_exception  # type: ignore[arg-type]
-    def call_method(self) -> None:
+    def call_obj(self) -> None:
         """Load the method from class."""
-        obj = self._load_class()
-        if self._config.method_name:
-            method = getattr(obj, self._config.method_name)
-            if callable(method):
-                if not self._config.method_args:
-                    self._result.result = method()
-                elif self._config.method_args_is_position:
-                    self._result.result = method(*self._config.method_args)
-                else:
-                    self._result.result = method(**self._get_keyword_args(self._config.method_args))
+        module = importlib.import_module(self._config.pkg)
+        if not self._config.objects:
+            from_thread.run_sync(self._event.set)
+            return
+        ret = {}
+        for obj_info in self._config.objects:
+            obj = self._get_obj_result(module, obj_info)
+            if not obj_info.methods:
+                ret[obj_info.name] = obj
+                continue
+            for m_info in obj_info.methods:
+                m = self._get_obj_result(obj, m_info)
+                ret[m_info.name] = m
+        self._result.result = ret
         from_thread.run_sync(self._event.set)
 
     async def __call__(self) -> PyScriptResult:
         """Execute."""
-        await to_thread.run_sync(self.call_method)
+        await to_thread.run_sync(self.call_obj)
         await self._event.wait()
         return self._result
 

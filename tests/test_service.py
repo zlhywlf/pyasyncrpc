@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 from faker import Faker
-from pyasyncrpc.model.PyScriptConfig import PyScriptConfig
+from pyasyncrpc.model.PyScriptConfig import PyScriptConfig, PyScriptObject
 
 
 @pytest.mark.anyio
@@ -25,12 +25,12 @@ async def test_execute_py_script(grpc_stub: Any, grpc_request: Any, faker: Faker
     """Execute python script."""
     class_arg = faker.name()
     method_arg = faker.name()
+    cls_info = PyScriptObject(
+        name="ArgClass", args=[class_arg], methods=[PyScriptObject(name="run", args=[method_arg])]
+    )
     config = PyScriptConfig(
         pkg="script.base_case",
-        class_name="ArgClass",
-        method_name="run",
-        class_args=[class_arg],
-        method_args=[method_arg],
+        objects=[cls_info],
     )
     ret = await grpc_stub.executePyScript(grpc_request(name=config.model_dump_json()))
     assert class_arg in ret.message

@@ -3,7 +3,7 @@
 Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 """
 
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -12,17 +12,21 @@ class PyScriptConfig(BaseModel):
     """the configuration of the executed python script."""
 
     pkg: str
-    class_name: Optional[str] = None
-    method_name: Optional[str] = None
-    class_args: Optional[List[Any]] = None
-    method_args: Optional[List[Any]] = None
-    method_args_is_position: bool = True
-    class_args_is_position: bool = True
+    objects: Optional[List["PyScriptObject"]] = None
 
 
 class PyScriptResult(BaseModel):
     """the result of python script execution."""
 
-    result: Optional[Any] = None
+    result: Optional[Dict[str, Any]] = None
     msg: Optional[str] = None
     success: bool = True
+
+
+class PyScriptObject(BaseModel):
+    """The methods or classes of the executed python script."""
+
+    name: str
+    args: Optional[List[Any]] = None
+    args_is_position: bool = True
+    methods: Optional[List["PyScriptObject"]] = None
