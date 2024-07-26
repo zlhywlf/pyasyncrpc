@@ -9,6 +9,7 @@ import logging
 from types import TracebackType
 from typing import Any, Awaitable, Callable, List, Optional, Type
 
+import anyio
 import grpc
 from pydantic import BaseModel
 from typing_extensions import Self, override
@@ -50,6 +51,8 @@ class GRPCService(Service):
             log.init_log()
         self._server: Optional[grpc.Server] = None
         self._snowflake = Snowflake(1, 1)
+        self._grace = info.grace
+        self._thread_limiter = info.thread_limiter
 
     @property
     def config(self) -> GRPCConfig:
@@ -57,8 +60,11 @@ class GRPCService(Service):
         return self._config
 
     @property
-    def server(self) -> Optional[grpc.Server]:
+    def server(self) -> grpc.Server:
         """Service config."""
+        if not self._server:
+            msg = "grpc.Server instance must be added"
+            raise RuntimeError(msg)
         return self._server
 
     def register_method(self, method_name: str, args_type: Type[BaseModel]) -> Callable[[Any], Any]:
@@ -90,6 +96,7 @@ class GRPCService(Service):
 
     @override
     async def start(self) -> None:
+        anyio.to_thread.current_default_thread_limiter().total_tokens = self._thread_limiter
         self._server = grpc.aio.server()
         self.config.handle_func(self.create_servicer(), self._server)
         listen_addr = self.config.info.listen_addr
@@ -100,13 +107,11 @@ class GRPCService(Service):
     @override
     async def close(self) -> None:
         logging.info("The asynchronous rpc application will be shut down")
-        if self._server:
-            await self._server.stop(200)
+        await self.server.stop(self._grace)
 
     @override
     async def wait(self) -> None:
-        if self._server:
-            await self._server.wait_for_termination()
+        await self.server.wait_for_termination()
 
     async def __aenter__(self) -> Self:
         """Enter."""

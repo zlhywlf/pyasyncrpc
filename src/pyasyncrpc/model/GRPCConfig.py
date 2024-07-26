@@ -38,6 +38,8 @@ class GRPCInfo(BaseModel):
     pd2_pkg: str
     pd2_grpc_pkg: str
     listen_addr: str
+    grace: int = 200
+    thread_limiter: int = 40
 
 
 class GRPCMethodInfo(BaseModel):
