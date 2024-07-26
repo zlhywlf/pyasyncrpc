@@ -25,6 +25,7 @@ from pyasyncrpc.service.GRPCService import GRPCService
 @click.option("--pd2_grpc_pkg", help="")
 @click.option("--listen_addr", default="[::]:50051", help="service address")
 @click.option("--method", multiple=True, default=(), help="JSON format configuration")
+@click.option("--cpu", default=1, help="the number of processes that are only valid for Linux or macOS")
 def main(**kwargs: Any) -> None:
     """The asynchronous rpc application."""
     if kwargs.get("version"):
@@ -33,7 +34,7 @@ def main(**kwargs: Any) -> None:
     info = GRPCInfo.model_validate(kwargs)
     methods_info = [GRPCMethodInfo.model_validate_json(_) for _ in kwargs.get("method", [])]
     service = GRPCService(info, methods_info, LoguruLog())
-    launcher = LauncherFactory.create_launcher(service)
+    launcher = LauncherFactory.create_launcher(service, info.cpu)
     launcher.launch()
 
 

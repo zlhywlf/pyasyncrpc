@@ -54,6 +54,7 @@ class GRPCService(Service):
         self._grace = info.grace
         self._thread_limiter = info.thread_limiter
         self._options = info.options
+        self._cpu = info.cpu
 
     @property
     def config(self) -> GRPCConfig:
@@ -98,7 +99,9 @@ class GRPCService(Service):
     @override
     async def start(self) -> None:
         anyio.to_thread.current_default_thread_limiter().total_tokens = self._thread_limiter
-        self._server = grpc.aio.server(options=self._options)
+        options = self._options if self._cpu == 1 else (*self._options, ("grpc.so_reuseport", 1))
+        logging.info(f"grpc options:{options}")
+        self._server = grpc.aio.server(options=options)
         self.config.handle_func(self.create_servicer(), self._server)
         listen_addr = self.config.info.listen_addr
         self._server.add_insecure_port(listen_addr)
@@ -109,6 +112,7 @@ class GRPCService(Service):
     async def close(self) -> None:
         logging.info("The asynchronous rpc application will be shut down")
         await self.server.stop(self._grace)
+        logging.info("The asynchronous rpc application has been shut down")
 
     @override
     async def wait(self) -> None:

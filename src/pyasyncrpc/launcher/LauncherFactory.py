@@ -18,13 +18,14 @@ class LauncherFactory:
     PLATFORM: ClassVar[str] = platform.system()
 
     @staticmethod
-    def create_launcher(service: Service) -> Launcher:
+    def create_launcher(service: Service, cpu: int) -> Launcher:
         """Create launcher."""
         launchers = get_special_modules(pyasyncrpc.launcher.__name__, Launcher)
         for launcher in launchers:
             if LauncherFactory.PLATFORM in launcher.__name__:
                 ret = launcher()  # type: ignore[abstract]
                 ret.add_service(service)
+                ret.set_cpu(cpu)
                 return ret
         msg = "No Implementation"
         raise RuntimeError(msg)

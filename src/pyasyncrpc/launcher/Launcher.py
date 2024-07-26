@@ -15,6 +15,7 @@ class Launcher(ABC):
     def __init__(self) -> None:
         """Init."""
         self._service: Optional[Service] = None
+        self._cpu = 1
 
     @abstractmethod
     def launch(self) -> None:
@@ -24,6 +25,10 @@ class Launcher(ABC):
         """Add service."""
         self._service = service
 
+    def set_cpu(self, cpu: int) -> None:
+        """Set the number of processes."""
+        self._cpu = max(cpu, 1)
+
     @property
     def service(self) -> Service:
         """Service."""
@@ -31,3 +36,8 @@ class Launcher(ABC):
             msg = "Service instance must be added"
             raise RuntimeError(msg)
         return self._service
+
+    @property
+    def cpu(self) -> int:
+        """Get the number of processes."""
+        return self._cpu
