@@ -3,7 +3,7 @@
 Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 """
 
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Sequence, Tuple
 
 import grpc
 from pydantic import BaseModel
@@ -40,6 +40,7 @@ class GRPCInfo(BaseModel):
     listen_addr: str
     grace: int = 200
     thread_limiter: int = 40
+    options: Sequence[Tuple[str, Any]] = ()
 
 
 class GRPCMethodInfo(BaseModel):

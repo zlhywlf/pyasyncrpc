@@ -53,6 +53,7 @@ class GRPCService(Service):
         self._snowflake = Snowflake(1, 1)
         self._grace = info.grace
         self._thread_limiter = info.thread_limiter
+        self._options = info.options
 
     @property
     def config(self) -> GRPCConfig:
@@ -97,7 +98,7 @@ class GRPCService(Service):
     @override
     async def start(self) -> None:
         anyio.to_thread.current_default_thread_limiter().total_tokens = self._thread_limiter
-        self._server = grpc.aio.server()
+        self._server = grpc.aio.server(options=self._options)
         self.config.handle_func(self.create_servicer(), self._server)
         listen_addr = self.config.info.listen_addr
         self._server.add_insecure_port(listen_addr)
