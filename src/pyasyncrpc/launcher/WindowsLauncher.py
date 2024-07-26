@@ -27,10 +27,10 @@ class WindowsLauncher(Launcher, Service):
 
     @override
     def launch(self) -> None:
-        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-        handler_func = ctypes.WINFUNCTYPE(ctypes.c_void_p)(self.run_callback)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)  # type: ignore[attr-defined,unused-ignore]
+        handler_func = ctypes.WINFUNCTYPE(ctypes.c_void_p)(self.run_callback)  # type: ignore[attr-defined,unused-ignore]
         if not kernel32.SetConsoleCtrlHandler(handler_func, True):  # noqa: FBT003
-            err = ctypes.get_last_error()
+            err = ctypes.get_last_error()  # type: ignore[attr-defined,unused-ignore]
             logging.info(f"Error setting control handler: {err}")
             sys.exit(1)
         try:
