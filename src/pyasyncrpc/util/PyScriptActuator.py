@@ -37,7 +37,7 @@ class PyScriptActuator:
             """Handling exceptions."""
             try:
                 return self(obj, *arg)
-            except (AttributeError, ModuleNotFoundError) as e:
+            except Exception as e:  # noqa: BLE001
                 obj.result.success = False
                 obj.result.msg = f"{self.__name__}:{e!s}"
                 from_thread.run_sync(obj.event.set)
