@@ -17,6 +17,7 @@ async def test_base(class_name: str) -> None:
     actuator = PyScriptActuator(config)
     ret = await actuator()
     assert ret.result == TEST_RESULT_SUCCESS
+    assert ret.success
 
 
 @pytest.mark.anyio
@@ -26,6 +27,7 @@ async def test_pkg_is_not_found() -> None:
     actuator = PyScriptActuator(config)
     ret = await actuator()
     assert ret.msg == "call_method:No module named 'script.not_found'"
+    assert not ret.success
 
 
 @pytest.mark.anyio
@@ -35,6 +37,7 @@ async def test_class_is_not_found() -> None:
     actuator = PyScriptActuator(config)
     ret = await actuator()
     assert ret.msg == "call_method:module 'script.base_case' has no attribute 'not_found'"
+    assert not ret.success
 
 
 @pytest.mark.anyio
@@ -44,3 +47,4 @@ async def test_method_is_not_found() -> None:
     actuator = PyScriptActuator(config)
     ret = await actuator()
     assert ret.msg == "call_method:'Simple' object has no attribute 'not_found'"
+    assert not ret.success

@@ -25,3 +25,4 @@ class PyScriptResult(BaseModel):
 
     result: Optional[Any] = None
     msg: Optional[str] = None
+    success: bool = True

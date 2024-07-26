@@ -38,6 +38,7 @@ class PyScriptActuator:
             try:
                 return self(obj, *arg)
             except (AttributeError, ModuleNotFoundError) as e:
+                obj.result.success = False
                 obj.result.msg = f"{self.__name__}:{e!s}"
                 from_thread.run_sync(obj.event.set)
                 return None
@@ -77,7 +78,7 @@ class PyScriptActuator:
             if callable(method):
                 if not self._config.method_args:
                     self._result.result = method()
-                elif self._config.class_args_is_position:
+                elif self._config.method_args_is_position:
                     self._result.result = method(*self._config.method_args)
                 else:
                     self._result.result = method(**self._get_keyword_args(self._config.method_args))
