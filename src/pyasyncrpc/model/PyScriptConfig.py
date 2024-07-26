@@ -16,6 +16,8 @@ class PyScriptConfig(BaseModel):
     method_name: Optional[str] = None
     class_args: Optional[List[Any]] = None
     method_args: Optional[List[Any]] = None
+    method_args_is_position: bool = True
+    class_args_is_position: bool = True
 
 
 class PyScriptResult(BaseModel):
