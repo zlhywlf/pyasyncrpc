@@ -3,6 +3,7 @@
 Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 """
 
+import logging
 import platform
 from typing import ClassVar
 
@@ -20,6 +21,7 @@ class LauncherFactory:
     @staticmethod
     def create_launcher(service: Service, cpu: int) -> Launcher:
         """Create launcher."""
+        logging.info(f"the number of processes:{cpu}")
         launchers = get_special_modules(pyasyncrpc.launcher.__name__, Launcher)
         for launcher in launchers:
             if LauncherFactory.PLATFORM in launcher.__name__:

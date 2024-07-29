@@ -8,7 +8,7 @@ import inspect
 import logging
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Any, Awaitable, Callable, List, Optional, Type
+from typing import Any, Awaitable, Callable, List, Optional, Tuple, Type
 
 import anyio
 import grpc
@@ -42,7 +42,8 @@ class GRPCService(Service):
         info: GRPCInfo,
         methods_info: Optional[List[GRPCMethodInfo]] = None,
         log: Optional[Log] = None,
-        middlewares: Optional[List[GRPCServiceMiddleware]] = None,
+        middlewares: Optional[Tuple[GRPCServiceMiddleware, ...]] = None,
+        interceptors: Optional[Tuple[grpc.aio.ServerInterceptor, ...]] = None,
     ) -> None:
         """Init."""
         pd2_pkg = importlib.import_module(info.pd2_pkg)
@@ -72,7 +73,8 @@ class GRPCService(Service):
         self._thread_limiter = info.thread_limiter
         self._options = info.options
         self._cpu = info.cpu
-        self._middlewares = middlewares or []
+        self._middlewares = middlewares or ()
+        self._interceptors = interceptors or ()
 
     @property
     def config(self) -> GRPCConfig:
@@ -108,6 +110,7 @@ class GRPCService(Service):
                     await middleware.post(ctx, ret)
                 return self.config.reply_func(**ret.model_dump(by_alias=True))
 
+            logging.info(f"register method:{method_name}")
             self.config.methods.append(GRPCMethod(grpc_method_name=method_name, method=wrap))
             return wrap
 
@@ -120,10 +123,11 @@ class GRPCService(Service):
 
     @override
     async def start(self) -> None:
+        logging.info(f"thread limiter:{self._thread_limiter}")
         anyio.to_thread.current_default_thread_limiter().total_tokens = self._thread_limiter
         options = self._options if self._cpu == 1 else (*self._options, ("grpc.so_reuseport", 1))
         logging.info(f"grpc options:{options}")
-        self._server = grpc.aio.server(options=options)
+        self._server = grpc.aio.server(options=options, interceptors=self._interceptors)
         self.config.handle_func(self.create_servicer(), self._server)
         listen_addr = self.config.info.listen_addr
         self._server.add_insecure_port(listen_addr)
