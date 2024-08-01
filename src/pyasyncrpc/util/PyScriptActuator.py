@@ -38,11 +38,12 @@ class PyScriptActuator:
             """Handling exceptions."""
             try:
                 return self(obj, *arg)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 obj.result.success = False
                 obj.result.msg = f"{self.__name__}:{e!s}"
+                raise e
+            finally:
                 from_thread.run_sync(obj.event.set)
-                return None
 
         return wrapper
 
@@ -83,7 +84,6 @@ class PyScriptActuator:
                 m = self._get_obj_result(obj, m_info)
                 ret[m_info.name] = m
         self._result.result = ret
-        from_thread.run_sync(self._event.set)
 
     async def __call__(self) -> PyScriptResult:
         """Execute."""

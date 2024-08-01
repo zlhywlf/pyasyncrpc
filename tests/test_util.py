@@ -3,6 +3,8 @@
 Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 """
 
+import contextlib
+
 import pytest
 from pyasyncrpc.model.PyScriptConfig import PyScriptConfig, PyScriptObject
 from pyasyncrpc.util.PyScriptActuator import PyScriptActuator
@@ -33,9 +35,10 @@ async def test_pkg_is_not_found() -> None:
     cls_info = PyScriptObject(name="Simple", methods=[PyScriptObject(name="run")])
     config = PyScriptConfig(pkg="script.not_found", objects=[cls_info])
     actuator = PyScriptActuator(config)
-    ret = await actuator()
-    assert ret.msg == "call_obj:No module named 'script.not_found'"
-    assert not ret.success
+    with contextlib.suppress(Exception):
+        await actuator()
+    assert actuator.result.msg == "call_obj:No module named 'script.not_found'"
+    assert not actuator.result.success
 
 
 @pytest.mark.anyio
@@ -44,9 +47,10 @@ async def test_class_is_not_found() -> None:
     cls_info = PyScriptObject(name="not_found", methods=[PyScriptObject(name="run")])
     config = PyScriptConfig(pkg="script.base_case", objects=[cls_info])
     actuator = PyScriptActuator(config)
-    ret = await actuator()
-    assert ret.msg == "call_obj:module 'script.base_case' has no attribute 'not_found'"
-    assert not ret.success
+    with contextlib.suppress(Exception):
+        await actuator()
+    assert actuator.result.msg == "call_obj:module 'script.base_case' has no attribute 'not_found'"
+    assert not actuator.result.success
 
 
 @pytest.mark.anyio
@@ -55,6 +59,7 @@ async def test_method_is_not_found() -> None:
     cls_info = PyScriptObject(name="Simple", methods=[PyScriptObject(name="not_found")])
     config = PyScriptConfig(pkg="script.base_case", objects=[cls_info])
     actuator = PyScriptActuator(config)
-    ret = await actuator()
-    assert ret.msg == "call_obj:'Simple' object has no attribute 'not_found'"
-    assert not ret.success
+    with contextlib.suppress(Exception):
+        await actuator()
+    assert actuator.result.msg == "call_obj:'Simple' object has no attribute 'not_found'"
+    assert not actuator.result.success
