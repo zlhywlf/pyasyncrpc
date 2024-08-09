@@ -5,9 +5,7 @@ Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 
 import importlib
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Union
-
-from anyio import to_thread
+from typing import Any, Dict, List, Union
 
 from pyasyncrpc.model.PyScriptConfig import PyScriptConfig, PyScriptObject, PyScriptResult
 
@@ -24,20 +22,6 @@ class PyScriptActuator:
     def result(self) -> PyScriptResult:
         """The result of Python script execution."""
         return self._result
-
-    def handle_exception(self: Callable[[Any, Any], Any]) -> Callable[[Any, Any], object]:  # type: ignore[misc]
-        """The decorator used to handle exceptions."""
-
-        def wrapper(obj: "PyScriptActuator", *arg: Any) -> None:
-            """Handling exceptions."""
-            try:
-                self(obj, *arg)
-            except Exception as e:
-                obj.result.success = False
-                obj.result.msg = f"{self.__name__}:{e!s}"
-                raise e
-
-        return wrapper
 
     def _get_keyword_args(self, origin_args: List[Any]) -> Dict[str, Any]:
         """Get keyword args."""
@@ -59,7 +43,6 @@ class PyScriptActuator:
             return obj(*info.args)
         return obj(**self._get_keyword_args(info.args))
 
-    @handle_exception  # type: ignore[arg-type]
     def call_obj(self) -> None:
         """Load the method from class."""
         module = importlib.import_module(self._config.pkg)
@@ -76,8 +59,11 @@ class PyScriptActuator:
                 ret[m_info.name] = m
         self._result.result = ret
 
-    async def __call__(self) -> None:
+    def __call__(self) -> None:
         """Execute."""
-        await to_thread.run_sync(self.call_obj)
-
-    handle_exception = staticmethod(handle_exception)  # type: ignore[assignment]
+        try:
+            self.call_obj()
+        except Exception as e:
+            self._result.success = False
+            self._result.msg = f"{e!s}"
+            raise e

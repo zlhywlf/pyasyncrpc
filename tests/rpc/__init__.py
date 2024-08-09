@@ -1,4 +1,5 @@
 import logging
+from weakref import proxy
 
 import anyio
 from pyasyncrpc.model.PyScriptConfig import PyScriptConfig
@@ -33,7 +34,7 @@ async def execute_py_script(ctx: RequestContext) -> Data:
     logging.info(ctx.request_id)
     config = PyScriptConfig.model_validate_json(ctx.request_param.name)
     actuator = PyScriptActuator(config)
-    await actuator()
+    await anyio.to_thread.run_sync(proxy(actuator))
     msg = f"Execute python script:{actuator.result}"
     logging.info(msg)
     return Data(message=msg, status=200)
