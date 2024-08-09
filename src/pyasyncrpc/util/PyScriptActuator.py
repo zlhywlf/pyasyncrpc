@@ -7,7 +7,7 @@ import importlib
 from types import ModuleType
 from typing import Any, Callable, Dict, List, Union
 
-from anyio import Event, from_thread, to_thread
+from anyio import to_thread
 
 from pyasyncrpc.model.PyScriptConfig import PyScriptConfig, PyScriptObject, PyScriptResult
 
@@ -19,17 +19,11 @@ class PyScriptActuator:
         """Init."""
         self._config = config
         self._result = PyScriptResult()
-        self._event = Event()
 
     @property
     def result(self) -> PyScriptResult:
         """The result of Python script execution."""
         return self._result
-
-    @property
-    def event(self) -> Event:
-        """The task event."""
-        return self._event
 
     def handle_exception(self: Callable[[Any, Any], Any]) -> Callable[[Any, Any], object]:  # type: ignore[misc]
         """The decorator used to handle exceptions."""
@@ -42,8 +36,6 @@ class PyScriptActuator:
                 obj.result.success = False
                 obj.result.msg = f"{self.__name__}:{e!s}"
                 raise e
-            finally:
-                from_thread.run_sync(obj.event.set)
 
         return wrapper
 
@@ -72,7 +64,6 @@ class PyScriptActuator:
         """Load the method from class."""
         module = importlib.import_module(self._config.pkg)
         if not self._config.objects:
-            from_thread.run_sync(self._event.set)
             return
         ret = {}
         for obj_info in self._config.objects:
@@ -88,6 +79,5 @@ class PyScriptActuator:
     async def __call__(self) -> None:
         """Execute."""
         await to_thread.run_sync(self.call_obj)
-        await self._event.wait()
 
     handle_exception = staticmethod(handle_exception)  # type: ignore[assignment]
