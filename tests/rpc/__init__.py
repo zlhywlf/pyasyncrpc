@@ -33,7 +33,7 @@ async def execute_py_script(ctx: RequestContext) -> Data:
     logging.info(ctx.request_id)
     config = PyScriptConfig.model_validate_json(ctx.request_param.name)
     actuator = PyScriptActuator(config)
-    ret = await actuator()
-    msg = f"Execute python script:{ret}"
+    await actuator()
+    msg = f"Execute python script:{actuator.result}"
     logging.info(msg)
     return Data(message=msg, status=200)

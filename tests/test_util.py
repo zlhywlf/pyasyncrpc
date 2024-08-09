@@ -23,10 +23,10 @@ async def test_base(info: PyScriptObject) -> None:
     """Simple test."""
     config = PyScriptConfig(pkg="script.base_case", objects=[info])
     actuator = PyScriptActuator(config)
-    ret = await actuator()
-    assert ret.result
-    assert ret.result.get("run") == TEST_RESULT_SUCCESS
-    assert ret.success
+    await actuator()
+    assert actuator.result.result
+    assert actuator.result.result.get("run") == TEST_RESULT_SUCCESS
+    assert actuator.result.success
 
 
 @pytest.mark.anyio

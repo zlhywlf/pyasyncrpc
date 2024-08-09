@@ -34,10 +34,10 @@ class PyScriptActuator:
     def handle_exception(self: Callable[[Any, Any], Any]) -> Callable[[Any, Any], object]:  # type: ignore[misc]
         """The decorator used to handle exceptions."""
 
-        def wrapper(obj: "PyScriptActuator", *arg: Any) -> object:
+        def wrapper(obj: "PyScriptActuator", *arg: Any) -> None:
             """Handling exceptions."""
             try:
-                return self(obj, *arg)
+                self(obj, *arg)
             except Exception as e:
                 obj.result.success = False
                 obj.result.msg = f"{self.__name__}:{e!s}"
@@ -85,10 +85,9 @@ class PyScriptActuator:
                 ret[m_info.name] = m
         self._result.result = ret
 
-    async def __call__(self) -> PyScriptResult:
+    async def __call__(self) -> None:
         """Execute."""
         await to_thread.run_sync(self.call_obj)
         await self._event.wait()
-        return self._result
 
     handle_exception = staticmethod(handle_exception)  # type: ignore[assignment]
