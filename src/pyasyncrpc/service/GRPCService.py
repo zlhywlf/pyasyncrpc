@@ -72,7 +72,6 @@ class GRPCService(Service):
         self._grace = info.grace
         self._thread_limiter = info.thread_limiter
         self._options = info.options
-        self._cpu = info.cpu
         self._middlewares = middlewares or ()
         self._interceptors = interceptors or ()
 
@@ -125,9 +124,8 @@ class GRPCService(Service):
     async def start(self) -> None:
         logging.info(f"thread limiter:{self._thread_limiter}")
         anyio.to_thread.current_default_thread_limiter().total_tokens = self._thread_limiter
-        options = self._options if self._cpu == 1 else (*self._options, ("grpc.so_reuseport", 1))
-        logging.info(f"grpc options:{options}")
-        self._server = grpc.aio.server(options=options, interceptors=self._interceptors)
+        logging.info(f"grpc options:{self._options}")
+        self._server = grpc.aio.server(options=self._options, interceptors=self._interceptors)
         self.config.handle_func(self.create_servicer(), self._server)
         listen_addr = self.config.info.listen_addr
         self._server.add_insecure_port(listen_addr)

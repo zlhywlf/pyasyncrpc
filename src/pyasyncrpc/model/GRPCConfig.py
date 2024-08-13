@@ -41,7 +41,6 @@ class GRPCInfo(BaseModel):
     grace: int = 200
     thread_limiter: int = 40
     options: Sequence[Tuple[str, Any]] = ()
-    cpu: int = 1
 
 
 class GRPCMethodInfo(BaseModel):

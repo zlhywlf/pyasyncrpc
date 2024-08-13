@@ -4,8 +4,6 @@ Copyright (c) 2023-present 善假于PC也 (zlhywlf).
 """
 
 import signal
-from multiprocessing import Process
-from typing import List
 
 import anyio
 from typing_extensions import override
@@ -23,16 +21,7 @@ class LinuxLauncher(Launcher, Service):
 
     @override
     def launch(self) -> None:
-        if self.cpu > 1:
-            workers: List[Process] = []
-            for _ in range(self.cpu):
-                worker = Process(target=anyio.run, args=(self.start,))
-                worker.start()
-                workers.append(worker)
-            for worker in workers:
-                worker.join()
-        else:
-            anyio.run(self.start)
+        anyio.run(self.start)
 
     @override
     async def start(self) -> None:
