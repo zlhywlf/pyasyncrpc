@@ -63,8 +63,7 @@ class GRPCService(Service):
         for method_info in methods_info or []:
             method_pkg = importlib.import_module(method_info.pkg)
             method_func = getattr(method_pkg, method_info.method_name)
-            arg_class = getattr(method_pkg, method_info.arg_class_name)
-            self.register_method(method_info.grpc_method_name, arg_class)(method_func)
+            self.register_method(method_info.grpc_method_name)(method_func)
         if log:
             log.init_log()
         self._server: Optional[grpc.Server] = None
@@ -88,7 +87,7 @@ class GRPCService(Service):
             raise RuntimeError(msg)
         return self._server
 
-    def register_method(self, method_name: str, args_type: Type[BaseModel]) -> Callable[[Any], Any]:
+    def register_method(self, method_name: str) -> Callable[[Any], Any]:
         """Register rpc method."""
 
         def wrapper(func: Callable[[RequestContext], Awaitable[BaseModel]]) -> Callable[[Any], Any]:
@@ -98,10 +97,7 @@ class GRPCService(Service):
 
             async def wrap(*args: Any) -> object:
                 """Process Parameters."""
-                request = args[1]
-                params = args_type.model_validate({k: getattr(request, k) for k in args[1].DESCRIPTOR.fields_by_name})
-                ctx = RequestContext(request_id=self._snowflake.next_id(), request_param=params)
-                logging.info(f"{ctx.request_id}:[%s]", params)
+                ctx = RequestContext(request_id=self._snowflake.next_id(), request=args[1], context=args[2])
                 for middleware in self._middlewares:
                     await middleware.pre(ctx)
                 ret = await func(ctx)

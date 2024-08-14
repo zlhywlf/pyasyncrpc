@@ -49,4 +49,3 @@ class GRPCMethodInfo(BaseModel):
     grpc_method_name: str
     pkg: str
     method_name: str
-    arg_class_name: str

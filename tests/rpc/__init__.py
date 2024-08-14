@@ -23,8 +23,9 @@ class Data(BaseModel):
 
 async def say_hello(ctx: RequestContext) -> Data:
     """Say hello."""
+    arg = Arg(name=ctx.request.name)
     await anyio.sleep(0.01 if ctx.request_id % 2 else 0.5)
-    msg = f"{ctx.request_id}[say: Hello, {ctx.request_param.name}!]"
+    msg = f"{ctx.request_id}[say: Hello, {arg.name}!]"
     logging.info(msg)
     return Data(message=msg, status=200)
 
@@ -32,7 +33,8 @@ async def say_hello(ctx: RequestContext) -> Data:
 async def execute_py_script(ctx: RequestContext) -> Data:
     """Execute python script."""
     logging.info(ctx.request_id)
-    config = PyScriptConfig.model_validate_json(ctx.request_param.name)
+    arg = Arg(name=ctx.request.name)
+    config = PyScriptConfig.model_validate_json(arg.name)
     actuator = PyScriptActuator(config)
     await anyio.to_thread.run_sync(proxy(actuator))
     msg = f"Execute python script:{actuator.result}"

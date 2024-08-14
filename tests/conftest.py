@@ -54,13 +54,11 @@ async def grpc_server(grpc_addr: str) -> AsyncGenerator[GRPCService, Any]:
             grpc_method_name="sayHello",
             pkg="rpc",
             method_name="say_hello",
-            arg_class_name="Arg",
         ),
         GRPCMethodInfo(
             grpc_method_name="executePyScript",
             pkg="rpc",
             method_name="execute_py_script",
-            arg_class_name="Arg",
         ),
     ]
     async with GRPCService(info, methods_info, LoguruLog()) as server:
