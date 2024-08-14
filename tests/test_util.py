@@ -26,8 +26,8 @@ async def test_base(info: PyScriptObject) -> None:
     config = PyScriptConfig(pkg="script.base_case", objects=[info])
     actuator = PyScriptActuator(config)
     await anyio.to_thread.run_sync(proxy(actuator))
-    assert actuator.result.result
-    assert actuator.result.result.get("run") == TEST_RESULT_SUCCESS
+    assert actuator.result.response
+    assert actuator.result.response.get("run") == TEST_RESULT_SUCCESS
     assert actuator.result.success
 
 
